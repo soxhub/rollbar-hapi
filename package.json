@@ -1,6 +1,6 @@
 {
     "name": "rollbar-hapi",
-    "version": "0.0.7",
+    "version": "0.0.6",
     "description": "A Hapi plugin for rollbar painless integration",
     "author": "Evangelos Pappas <epappas@evalonlabs.com>",
     "engine": "node >= 0.10.x",
@@ -28,8 +28,7 @@
         "rollbar": "^0.5.11"
     },
     "peerDependencies": {
-        "rollbar": "0.x.x",
-	"hapi": "16.x.x"
+        "rollbar": "0.x.x"
     },
     "devDependencies": {
         "mocha": "^1.18.2",
