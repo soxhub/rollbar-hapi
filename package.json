@@ -5,7 +5,7 @@
     "author": "Evangelos Pappas <epappas@evalonlabs.com>",
     "engine": "node >= 0.10.x",
     "scripts": {
-        "test": "mocha test"
+        "test": "lab test"
     },
     "repository": {
         "type": "git",
@@ -24,18 +24,18 @@
         "hapi",
         "plugin"
     ],
-    "dependencies": {
-        "rollbar": "^0.5.11"
-    },
+    "dependencies": {},
     "peerDependencies": {
-        "rollbar": "0.x.x",
-	"hapi": "16.x.x"
+        "rollbar": "2.x.x",
+        "hapi": "16.x.x"
     },
     "devDependencies": {
-        "mocha": "^1.18.2",
-        "should": "^3.3.1",
-        "superagent": "^0.18.0",
+        "chai": "^4.0.2",
+        "hapi": "^16.4.2",
+        "lab": "^13.1.0",
         "pre-commit": "0.0.9",
-        "rollbar": "^0.5.11"
+        "rollbar": "^2.0.4",
+        "sinon": "^2.3.4",
+        "superagent": "^0.18.0"
     }
 }
