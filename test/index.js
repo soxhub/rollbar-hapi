@@ -1,85 +1,166 @@
-/* -*- javascript -*- */
-/* *******************************************************************
- *  @author Evangelos Pappas <epappas@evalonlabs.com>
- *  @copyright (C) 2014, evalonlabs
- *  Copyright 2015, evalonlabs
- *
- *  The MIT License (MIT)
- *
- *  Copyright (c) 2015 Evangelos Pappas
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
- *  
- *  The above copyright notice and this permission notice shall be included in all
- *  copies or substantial portions of the Software.
- *  
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
- *
- *  @doc
- *
- *  @end
- * *******************************************************************/
+const Lab = require('lab');
+const lab = exports.lab = Lab.script();
+const Hapi = require('hapi');
+const Boom = require('boom');
+const sinon = require('sinon');
+var expect = require('chai').expect;
 
-var Hapi = require('hapi');
-var should = require('should');
+lab.experiment('plugin exposes', function() {
+	lab.test('should expose rollbar', function(done) {
+		var server = makeServerWithPlugin();
+		expect(server.plugins['rollbar-hapi'].rollbar).to.not.be.empty;	
+		done();
+	});
 
-describe('Plugin Exposes', function () {
-    var server = new Hapi.Server();
+	lab.test('should expose rollbar error function', function (done) {
+		var server = makeServerWithPlugin();
+		var rollbar = server.plugins['rollbar-hapi'].rollbar;
 
-    server.connection({ port: 7000 });
+		expect(rollbar.error).to.be.a('function');
+		done();
+	});
 
-    server.register({
-        register: require('../'),
-        options: {
-            accessToken: '90bdff07d44a4984aea0d0684bb6c142'
-        }
-    }, function (err) {
-        if (err) throw err;
-    });
-
-    it('Should expose rollbar', function (done) {
-
-        should(server.plugins['rollbar-hapi'].rollbar).not.be.empty
-
-        done();
-    });
-
-    it('Should expose handleError', function (done) {
-
-        should(server.methods.handleError).be.a.Function
-
-        done();
-    });
-
-    it('Should expose handleErrorWithPayloadData', function (done) {
-
-        should(server.methods.handleErrorWithPayloadData).be.a.Function
-
-        done();
-    });
-
-    it('Should expose reportMessage', function (done) {
-
-        should(server.methods.reportMessage).be.a.Function
-
-        done();
-    });
-
-    it('Should expose reportMessageWithPayloadData', function (done) {
-
-        should(server.methods.reportMessageWithPayloadData).be.a.Function
-
-        done();
-    });
 });
+
+lab.experiment('plugin relays server errors to rollbar', function() {
+	lab.test('should relay http state errors', function(done) {
+
+		var server = makeServerWithPlugin();
+
+		// Add a basic route and register a cookie definition
+		server.route({
+			method: 'GET',
+			path: '/good',
+			handler: function (request, reply) {
+				return reply('success');
+			}
+		});
+
+		server.state('session', {
+			ttl: 24 * 60 * 60 * 1000,
+			isSecure: true,
+			path: '/',
+			encoding: 'base64json'
+		});
+
+		// This request with an improperly encoded `session` cookie value 
+		// will trigger a state error and emit an internal-error event 
+		const request = {
+			method: 'GET',
+			url: '/good',
+			payload: {},
+			headers: {
+				'Cookie': 'PHPSESSID=298zf09hf012fh2; session=u32t4o3tb3gg43; _gat=1;'
+			}
+		};
+
+
+		// Wrap `rollbar.warning` with a spy
+		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+		let spy = sinon.stub(rollbar,'warning')
+
+		// The emitting of the `tail` event is the last step in the hapi request cycle
+		// (https://hapijs.com/api#request-lifecycle) and the ideal place to check the
+		// state of any activity that occurs after the response is sent to the client
+		// but before the request cycle completes.
+		server.on('tail', function(request) {
+			sinon.assert.calledOnce(spy);
+			var firstArg = spy.firstCall.args[0];
+			expect(firstArg).to.be.a('string');
+			spy.restore();
+			done();
+		});
+	
+		server.inject(request);
+
+	});
+
+	lab.test('should relay internal errors', function(done) {
+
+		var server = makeServerWithPlugin();
+
+		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+
+		server.route({
+			method: 'GET',
+			path: '/internal',
+			handler: function (request, reply) {
+				return reply(new Error('unexpected error'));
+			}
+		});
+
+		var stub  = sinon.stub(rollbar,'error');
+
+		const request = {
+			method: 'GET',
+			url: '/internal',
+			payload: {}
+		};
+
+		server.on('tail', function(request) {
+			sinon.assert.calledTwice(stub);
+			let secondCall = stub.secondCall;
+			var firstArg = secondCall.args[0];
+			expect(firstArg.isBoom).to.be.true;
+			stub.restore();
+			done();
+		});
+
+		server.inject(request);
+
+	});
+
+	lab.test('should relay 4xx bad request errors', function(done) {
+
+		var server = makeServerWithPlugin();
+
+		var rollbar = server.plugins['rollbar-hapi'].rollbar
+
+		server.route({
+			method: 'GET',
+			path: '/badRequest',
+			handler: function (request, reply) {
+				return reply(Boom.badRequest('Unsupported parameter'));
+			}
+		});
+
+		var stub  = sinon.stub(rollbar,'error');
+
+		const request = {
+			method: 'GET',
+			url: '/badRequest',
+			payload: {}
+		};
+
+		server.on('tail', function(request) {
+			sinon.assert.calledOnce(stub);
+			var firstArg = stub.firstCall.args[0];
+			expect(firstArg.isBoom).to.be.true;
+			stub.restore();
+			done();
+		});
+
+		server.inject(request);
+	});	
+
+});
+
+var makeServerWithPlugin = function () { 
+	var server = new Hapi.Server();
+
+	server.connection({ port: 7000 });
+
+	server.register({
+		register: require('../'),
+		options: {
+			accessToken: '90bdff07d44a4984aea0d0684bb6c142'
+		}
+	}, function (err) {
+		if (err) throw err;
+	});
+
+	return server;
+};
+
+
+

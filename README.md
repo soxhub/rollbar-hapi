@@ -19,7 +19,7 @@ A Hapi plugin for rollbar painless integration
             options: {
                 accessToken: '',
                 environment: '', // optional, defaults to process.env.NODE_ENV
-                exitOnUncaughtException: true // optional, defaults to true
+                handleUncaughtExceptions: true // optional, defaults to false
             }
         }, function (err) {
             if (err) throw err;
@@ -29,7 +29,6 @@ A Hapi plugin for rollbar painless integration
 
     server.plugins['rollbar-hapi'].rollbar // the rollbar module, already initialised
 
-    server.methods.handleError(err, req, next); // == rollbar.handleError
-    server.methods.handleErrorWithPayloadData(err, opts, req, next); // == rollbar.handleErrorWithPayloadData
-    server.methods.reportMessage(msg, level, req, next); // == rollbar.reportMessage
-    server.methods.reportMessageWithPayloadData(msg, opts, req, next); // == rollbar.reportMessageWithPayloadData
+    The exposed `rollbar` above can be used to access rollbar's `log`, `debug`, `info`, `warning`, 
+    `error`, and `critical` methods
+
