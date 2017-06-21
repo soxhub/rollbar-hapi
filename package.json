@@ -1,6 +1,6 @@
 {
     "name": "@soxhub/rollbar-hapi",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "A Hapi plugin for rollbar painless integration",
     "author": "SOXHUB <engineering@soxhub.com>",
     "engine": "node >= 0.10.x",
