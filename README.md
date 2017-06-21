@@ -20,6 +20,12 @@ A Hapi plugin for rollbar painless integration
                 accessToken: '',
                 environment: '', // optional, defaults to process.env.NODE_ENV
                 handleUncaughtExceptions: true // optional, defaults to false
+                sanitize: function(err) { ... }, // optional, to clean error messages
+                                                 // sent to rollbar; defaults to no
+                                                 // change to the message
+                filter: function(err) { ... },   // optional, to filter the error messages
+                                                 // sent to rollbar; defaults to no
+                                                 // filter
             }
         }, function (err) {
             if (err) throw err;
@@ -27,7 +33,7 @@ A Hapi plugin for rollbar painless integration
 
 # Exposes
 
-    server.plugins['rollbar-hapi'].rollbar // the rollbar module, already initialised
+    server.plugins['@soxhub/rollbar-hapi'].rollbar // the rollbar module, already initialised
 
     The exposed `rollbar` above can be used to access rollbar's `log`, `debug`, `info`, `warning`, 
     `error`, and `critical` methods

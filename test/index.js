@@ -10,13 +10,13 @@ var expect = require('chai').expect;
 lab.experiment('plugin exposes', function() {
 	lab.test('should expose rollbar', function(done) {
 		var server = makeServerWithPlugin();
-		expect(server.plugins['rollbar-hapi'].rollbar).to.not.be.empty;
+		expect(server.plugins['@soxhub/rollbar-hapi'].rollbar).to.not.be.empty;
 		done();
 	});
 
 	lab.test('should expose rollbar error function', function (done) {
 		var server = makeServerWithPlugin();
-		var rollbar = server.plugins['rollbar-hapi'].rollbar;
+		var rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 
 		expect(rollbar.error).to.be.a('function');
 		done();
@@ -55,7 +55,7 @@ lab.experiment('plugin relays server errors to rollbar', function() {
 		};
 
 		// Wrap `rollbar.warning` with a spy
-		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+		var rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 		let spy = sinon.stub(rollbar,'warning');
 
 		// The emitting of the `tail` event is the last step in the hapi request cycle
@@ -76,7 +76,7 @@ lab.experiment('plugin relays server errors to rollbar', function() {
 	lab.test('should relay internal errors', function(done) {
 		var server = makeServerWithPlugin();
 
-		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+		var rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 
 		server.route({
 			method: 'GET',
@@ -109,7 +109,7 @@ lab.experiment('plugin relays server errors to rollbar', function() {
 	lab.test('should relay 4xx bad request errors', function(done) {
 		var server = makeServerWithPlugin();
 
-		var rollbar = server.plugins['rollbar-hapi'].rollbar;
+		var rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 
 		server.route({
 			method: 'GET',
@@ -145,7 +145,7 @@ lab.experiment('plugin relays server errors to rollbar', function() {
 			}
 		});
 
-		var rollbar = server.plugins['rollbar-hapi'].rollbar;
+		var rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 
 		server.route({
 			method: 'GET',
@@ -195,7 +195,7 @@ lab.experiment('plugin relays server errors that are not filtered to rollbar', f
 			}
 		});
 
-		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+		let rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 		let stub  = sinon.stub(rollbar,'error');
 
 		const request = {
@@ -232,7 +232,7 @@ lab.experiment('plugin relays server errors that are not filtered to rollbar', f
 			}
 		});
 
-		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+		let rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 		let stub  = sinon.stub(rollbar,'error');
 
 		const request = {
@@ -261,7 +261,7 @@ lab.experiment('plugin relays server errors that are not filtered to rollbar', f
 			}
 		});
 
-		let rollbar = server.plugins['rollbar-hapi'].rollbar;
+		let rollbar = server.plugins['@soxhub/rollbar-hapi'].rollbar;
 		let stub  = sinon.stub(rollbar,'error');
 
 		const request = {
@@ -278,7 +278,6 @@ lab.experiment('plugin relays server errors that are not filtered to rollbar', f
 
 		server.inject(request);
 	});
-
 });
 
 var makeServerWithPlugin = function (moreOptions = {}) {

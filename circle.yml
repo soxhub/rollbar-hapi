@@ -1,0 +1,10 @@
+machine:
+  node:
+    version: 8.0.0
+test:
+  pre:
+    - npm run eslint
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
+    - mv ./test.xml $CIRCLE_TEST_REPORTS/junit/
+
