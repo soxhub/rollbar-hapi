@@ -1,11 +1,12 @@
 {
     "name": "@soxhub/rollbar-hapi",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "A Hapi plugin for rollbar painless integration",
     "author": "SOXHUB <engineering@soxhub.com>",
-    "engine": "node >= 0.10.x",
+    "engine": "node >= 8.9.1",
     "scripts": {
-        "test": "lab test"
+        "test": "lab test",
+        "eslint": "./node_modules/eslint/bin/eslint.js ."
     },
     "repository": {
         "type": "git",
@@ -27,12 +28,14 @@
     "dependencies": {},
     "peerDependencies": {
         "rollbar": "2.x.x",
-        "hapi": "16.x.x"
+        "hapi": "17.x.x"
     },
     "devDependencies": {
         "chai": "^4.0.2",
-        "hapi": "^16.4.2",
+        "eslint": "^4.0.0",
+        "hapi": "^17.0.0",
         "lab": "^13.1.0",
+        "nyc": "^11.0.3",
         "pre-commit": "0.0.9",
         "rollbar": "^2.0.4",
         "sinon": "^2.3.4",

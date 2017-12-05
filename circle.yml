@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: soxhub/docker-ci
+    working_directory: ~/soxhub/rollbar-hapi
+    steps:
+      - checkout
+      - setup_remote_docker:
+          reusable: true
+          exclusive: false
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t rollbar-hapi:BN${CIRCLE_BUILD_NUM} .
+      # - run:
+      #     name: Run Linter
+      #     command: |
+      #       docker run -it --rm rollbar-hapi:BN${CIRCLE_BUILD_NUM} npm run eslint
+      - run:
+          name: Run Tests
+          command: |
+            docker run -it \
+                --env "NODE_ENV=test" \
+                --name rollbar-hapi-${CIRCLE_BUILD_NUM} \
+                rollbar-hapi:BN${CIRCLE_BUILD_NUM} bash -c "lab --reporter html --output test-results.html"
+      - run:
+          name: Collect Reports
+          when: always
+          command: |
+            mkdir -p /test-results/
+            docker cp rollbar-hapi-${CIRCLE_BUILD_NUM}:/var/www/soxhub/rollbar-hapi/test-results.html /test-results/
+      - run:
+          name: Cleanup
+          when: always
+          command: |
+            docker rm rollbar-hapi-${CIRCLE_BUILD_NUM}
+      - store_artifacts:
+          path: /test-results/
+      - store_test_results:
+          path: /test-results/
